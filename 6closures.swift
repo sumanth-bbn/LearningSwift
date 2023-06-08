@@ -4,19 +4,26 @@
     Closures can capture and store references to any constants and variables from the context in which they’re defined.
     
     Closures take one of three forms:
-        + Global functions are closures that have a name and don’t capture any values.
-        + Nested functions are closures that have a name and can capture values from their enclosing function.
-        + Closure expressions(lambdas, funcvtion literals as called in other languages) 
-        are unnamed closures written in a lightweight syntax that can capture values from their surrounding context.
+        * Global functions are closures that have a name and don’t capture any values.
+        * Nested functions are closures that have a name and can capture values from their enclosing function.
+        * Closure expressions are unnamed closures written in a lightweight syntax that can capture values from their surrounding context.
+            * these are called lambdas, function literals, anonymous functions in other languages)
+            * these are function definitions that are not bound to an identifier.
 
     Closure expressions
-        +Closure expressions are a way to write inline closures in a brief, focused syntax
-    '''
-        { (<#parameters#> : parameterType) -> returnType in
-          <#statements#>
-        }
-        // In python lambda (param) => use params in a single expression
-    '''
+        * Closure expressions are a way to write inline closures in a brief, focused syntax, but code block need not 
+            * restricted to a single line as in python
+        '''
+            { (param : paramType, ..) -> returnType in
+            <#statements#>
+            }
+            
+        '''
+        * In Python: lambda param,.. : <#statement#>
+        * In Scala: (param: paramType,..) => <#statement#> , retrun type is inferred
+        * In swift if some thing opens with a '{',then it will be a closure expression -> we might see this in SWIfTUI extensively
+    
+    * Single line and multiline statements
     '''
         reversedNames = names.sorted(by: { (s1: String, s2: String) -> Bool in
             // some other code
@@ -26,40 +33,49 @@
         reversedNames = names.sorted(by: { (s1: String, s2: String) -> Bool in  return s1 > s2})
     '''
     
-    Implicivt return
+    * Implicit return
     '''
         reversedNames = names.sorted(by: { (s1: String, s2: String) -> Bool in  s1 > s2})
     '''
     
-    Type inference
+    * Type inference
     Type inference for both params and return type
-    Because the sorting closure is passed as an argument to a method, Swift can infer the types of its parameters and the type of the value it returns. 
-    The sorted(by:) method is being called on an array of strings, so its argument must be a function of type (String, String) -> Bool. 
-    This means that the (String, String) and Bool types don’t need to be written as part of the closure expression’s definition. Because all of the types can be inferred, the return arrow (->) and the parentheses around the names of the parameters can also be omitted:
+    Because the sorting closure is passed as an argument to a method, 
+    Swift can infer the types of its parameters and the type of the value it returns. 
+    we can also ommit the parenthesis around params
     '''       
         reversedNames = names.sorted(by: { s1, s2 in s1 > s2})
     '''
     It’s always possible to infer the parameter types and return type when passing a closure to a function or method as an inline closure expression
 
-    Shorthand argument
+    *good one to use in real world
+        '''
+            { param1,.. in <#statement#> }
+                    or
+            { param1,.. in 
+                <#statements#> 
+            }
+        '''
+    * Shorthand argument
     Swift automatically provides shorthand argument names to inline closures, 
     which can be used to refer to the values of the closure’s arguments by the names $0, $1, $2, and so on.
+    Scala offers _ notations for this
     '''
         reversedNames = names.sorted(by: { $0 > $1 } )
     '''
 
-    Operator Methods
+    * Operator Methods
     There’s actually an even shorter way to write the closure expression above. 
     Swift’s String type defines its string-specific implementation of the greater-than operator (>) as a method that has two parameters of type String, and returns a value of type Bool
     '''
         reversedNames = names.sorted(by: >)
     '''
     
-    Trailing Closures
+    * Trailing Closures
     If you need to pass a closure expression to a function as the function’s final argument and the closure expression is long, 
     it can be useful to write it as a trailing closure instead. You write a trailing closure after the function call’s parentheses, 
     even though the trailing closure is still an argument to the function. 
-    When you use the trailing closure syntax, you don’t write the argument label for the first closure as part of the function call
+    When you use the trailing closure syntax, you don’t write the argument_label for the first closure as part of the function call
     '''
         func someFunctionThatTakesAClosure(closure: () -> Void) {
             // function body goes here
@@ -92,7 +108,15 @@
             (params) in Expression
         }
     '''
- 
+
+    trailing closures can also be used with Class/struct initialization, 
+    lets say a struct called StructName takes a unnamed param(we can get it in init funct with _ as argument_label) of type() -> Bool
+    StructName({() in true})
+    StructName({true})
+    StructName{true}
+
+
+    * Know more about @escaping closures, as this is need in creating a init function with _ as argument_label in the above case
  
  */
 
@@ -115,6 +139,7 @@
     These some advanced functional programming concepts
     Escaping Closures
     Autoclosures
+
  */
 
 // Capturing Values
@@ -140,14 +165,7 @@ var customersInLine: [String] = ["Chris", "Alex", "Ewa", "Barry", "Daniella"]
 print(customersInLine.count)
 // Prints "5"
 
-
-let customerProvider = { customersInLine.remove(at: 0) }  
-// this is short hand for this closure expression
-/*
-let customerProvider: () -> String = { () -> String in 
-    return customersInLine.remove(at: 0) 
-}
-*/ 
+let customerProvider: () -> String = { customersInLine.remove(at: 0) }  
 print(customersInLine.count)
 // Prints "5"
 
@@ -159,3 +177,129 @@ func serve(customer customerProvider: () -> String) {
     print("Now serving \(customerProvider())!")
 }
 serve(customer: { customersInLine.remove(at: 0) } )
+print(customersInLine.count)
+
+// customersInLine is ["Ewa", "Barry", "Daniella"]
+func serve1(customer customerProvider: @autoclosure () -> String) {
+    print("Now serving \(customerProvider())!")
+}
+serve1(customer: customersInLine.remove(at: 0))
+// Prints "Now serving Ewa!"
+
+// *Overusing autoclosures can make your code hard to understand. 
+// *The context and function name should make it clear that evaluation is being deferred.
+
+
+// Example for Trailing closures with Structs/classes and @escaping closures 
+struct A {
+    var a: () -> Bool
+
+    // why @escaping ??
+    // here the closure that is passes to init function is being copied to var a which is outside the init function
+    // so we must allow the input closure expression to be escaped from init function
+    init (_ f:@escaping  () -> Bool){
+        self.a = f
+    }
+}
+
+var x = A({() in true})
+print(x.a())
+var y = A({true})
+print(y.a())
+var z = A{true}
+print(z.a())
+print(A{true}.a())   
+
+// Escaping closures  - More details
+
+var completionHandlers: () -> Void = {print("random")}
+
+func functionWithEscapingClosure(completionHandler: @escaping () -> Void) {
+    completionHandlers = completionHandler
+}
+completionHandlers()
+functionWithEscapingClosure(completionHandler: {print("completing")})
+completionHandlers()
+
+// Escaping closures that capture self
+print("ESCAPING CLOSURE")
+/*
+* Normally, a closure captures variables implicitly by using them in the body of the closure, but in case of self you need to be explicit. 
+    * If you want to capture self, write self explicitly when you use it, or include self in the closure’s capture list
+    * Writing self explicitly lets you express your intent, and reminds you to confirm that there isn’t a reference cycle
+    * in the code below, the closure passed to someFunctionWithEscapingClosure(_:) refers to self explicitly. 
+    * the closure passed to someFunctionWithNonescapingClosure(_:) is a nonescaping closure, which means it can refer to self implicitly.
+*/
+
+var completionHandler: () -> Void = {print("random")}
+
+func someFunctionWithEscapingClosure(completionHandlerParam: @escaping () -> Void) {
+    // we are moving the closure to outside of this function and it can be executed later using the external reference
+    completionHandler = completionHandlerParam
+}
+
+func someFunctionWithNonescapingClosure(closure: () -> Void) {
+    // executes in this body itself
+    closure()
+}
+
+class SomeClass {
+    var x = 10
+    func doSomething() {
+        someFunctionWithEscapingClosure { self.x = 100 }
+        // if we donlt use self, it results in compilation error
+        // reference to property 'x' in closure requires explicit use of 'self' to make capture semantics explicit
+        someFunctionWithNonescapingClosure { x = 200 }
+    }
+}
+
+
+let instance = SomeClass()
+instance.doSomething()
+print(instance.x)
+// Prints "200"
+completionHandler()
+print(instance.x)
+// Prints "100"
+
+// Implicit capture of self by including it in the closure’s capture list, and then refers to self implicitly:
+
+
+
+class SomeOtherClass {
+    var x: Int = 10
+    func doSomething() {
+        someFunctionWithEscapingClosure { [self] in x = 100 }
+        // someFunctionWithEscapingClosure { [self: SomeOtherClass] in x = 100 } //this don't work
+        someFunctionWithNonescapingClosure { x = 200 }
+    }
+}
+
+let someInstance: SomeOtherClass = SomeOtherClass()
+someInstance.doSomething()
+print(someInstance.x)
+// Prints "200"
+completionHandler()
+print(someInstance.x)
+// Prints "100"
+
+
+// AUTO CLOSURE
+print("AUTO CLOSURE")
+func printTest1(_ result: () -> Void) {
+    print("Before")
+    result()
+    print("After")
+}
+
+printTest1({ print("Hello") })
+print("Using trailing closure")
+printTest1{ print("Hello") }
+
+func printTest2(_ result: @autoclosure () -> Void) {
+    print("Before")
+    result()
+    print("After")
+}
+print("Using auto closure")
+printTest2(print("Hello"))

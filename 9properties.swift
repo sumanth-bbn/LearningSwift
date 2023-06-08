@@ -11,7 +11,9 @@ CONCEPTS
 *                 - if we use private(set) instead of private, the property is know to the outer world as it can read the value, so the memberwise init is available and not private
 *                - We need to create a custom initializer which is not private if the variable is private or use a default initializations for private properties
 * static properties - 
+* Subscript
 */
+
 
 // NORMAL PROPERTIES - CAN BE VAR OR LET
 struct Race {
@@ -329,3 +331,22 @@ struct Employee {
 }
 
 print(Employee.example)
+
+/*
+
+* syntax
+subscript(index: Int) -> Int {
+    get {
+        // Return an appropriate subscript value here.
+    }
+    set(newValue) {
+        // Perform a suitable setting action here.
+    }
+}
+
+* only getter
+subscript(index: Int) -> Int {
+    // Return an appropriate subscript value here.
+}
+
+*/
